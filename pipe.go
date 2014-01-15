@@ -283,11 +283,10 @@ func firstErr(err1, err2 error) error {
 	return err2
 }
 
-// Run runs the p pipe discarding its output.
+// RunState runs the tasks in the p pipe using the s state.
 //
-// See functions Output, CombinedOutput, and DividedOutput.
-func Run(p Pipe) error {
-	s := NewState(nil, nil)
+// See functions Run, Output, CombinedOutput, and DividedOutput.
+func RunState(s *State, p Pipe) error {
 	err := p(s)
 	if err == nil {
 		err = s.RunTasks()
@@ -295,16 +294,19 @@ func Run(p Pipe) error {
 	return err
 }
 
+// Run runs the p pipe discarding its output.
+//
+// See functions Output, CombinedOutput, and DividedOutput.
+func Run(p Pipe) error {
+	return RunState(NewState(nil, nil), p)
+}
+
 // Output runs the p pipe and returns its stdout output.
 //
 // See functions Run, CombinedOutput, and DividedOutput.
 func Output(p Pipe) ([]byte, error) {
 	outb := &OutputBuffer{}
-	s := NewState(outb, nil)
-	err := p(s)
-	if err == nil {
-		err = s.RunTasks()
-	}
+	err := RunState(NewState(outb, nil), p)
 	return outb.Bytes(), err
 }
 
@@ -314,11 +316,7 @@ func Output(p Pipe) ([]byte, error) {
 // See functions Run, Output, and DividedOutput.
 func CombinedOutput(p Pipe) ([]byte, error) {
 	outb := &OutputBuffer{}
-	s := NewState(outb, outb)
-	err := p(s)
-	if err == nil {
-		err = s.RunTasks()
-	}
+	err := RunState(NewState(outb, outb), p)
 	return outb.Bytes(), err
 }
 
